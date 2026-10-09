@@ -1,0 +1,40 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: litellm-https-redirect
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: litellm
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`litellm.example.com`)
+      services:
+        - name: litellm
+          port: 80
+  tls:
+    certResolver: letsencrypt
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: litellm-http
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`litellm.example.com`)
+      middlewares:
+        - name: litellm-https-redirect
+      services:
+        - name: litellm
+          port: 80
